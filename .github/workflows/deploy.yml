@@ -1,0 +1,129 @@
+name: Build & SSH Deploy to Azure VM
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.20.x"
+  APP_NAME: "bingohr-api"
+  SERVICE_NAME: "bingohr"
+  REMOTE_BASE: "/opt/bingohr"
+  REMOTE_APP_DIR: "/opt/bingohr/api"
+
+jobs:
+  build:
+    name: Build Linux binary artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build linux/amd64 binary
+        working-directory: api
+        run: |
+          go version
+          mkdir -p dist
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/${APP_NAME} .
+
+      - name: Package release (binary + config + fonts)
+        working-directory: api
+        run: |
+          mkdir -p dist/package/runtime/fonts
+          cp dist/${APP_NAME} dist/package/
+          cp -r conf dist/package/
+          cp runtime/fonts/msyhbd.ttc dist/package/runtime/fonts/
+          tar -C dist/package -czf dist/${APP_NAME}-linux-amd64.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${APP_NAME}-linux-amd64
+          path: api/dist/${APP_NAME}-linux-amd64.tar.gz
+
+  deploy:
+    name: Deploy to Azure VM via SSH
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${APP_NAME}-linux-amd64
+
+      - name: Prepare SSH key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AZURE_VM_SSH_KEY }}" > ~/.ssh/azure_vm_id
+          chmod 600 ~/.ssh/azure_vm_id
+
+      - name: Upload package to VM
+        env:
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+          USER: ${{ secrets.AZURE_VM_USER }}
+        run: |
+          PORT=${{ secrets.AZURE_VM_SSH_PORT }}
+          PORT=${PORT:-22}
+          scp -i ~/.ssh/azure_vm_id -P "$PORT" -o StrictHostKeyChecking=no ${APP_NAME}-linux-amd64.tar.gz ${USER}@${HOST}:/tmp/${APP_NAME}.tar.gz
+
+      - name: Install & restart service on VM
+        shell: bash
+        env:
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+          USER: ${{ secrets.AZURE_VM_USER }}
+          APP_NAME: ${{ env.APP_NAME }}
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+          REMOTE_BASE: ${{ env.REMOTE_BASE }}
+          REMOTE_APP_DIR: ${{ env.REMOTE_APP_DIR }}
+        run: |
+          PORT=${{ secrets.AZURE_VM_SSH_PORT }}
+          PORT=${PORT:-22}
+          ssh -i ~/.ssh/azure_vm_id -p "$PORT" -o StrictHostKeyChecking=no "$USER@$HOST" bash -c "'
+          set -e
+
+          sudo mkdir -p $REMOTE_APP_DIR
+          sudo chown -R $USER:$USER $REMOTE_BASE
+
+          # Unpack release
+          tar -xzf /tmp/${APP_NAME}.tar.gz -C $REMOTE_APP_DIR
+          rm -f /tmp/${APP_NAME}.tar.gz
+
+          # Ensure runtime directories exist
+          mkdir -p $REMOTE_APP_DIR/runtime/{logs,upload/images,export,qrcode,fonts}
+
+          # Create/Update systemd unit
+          sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null <<EOL
+          [Unit]
+          Description=${APP_NAME} service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=${REMOTE_APP_DIR}
+          ExecStart=${REMOTE_APP_DIR}/${APP_NAME}
+          Restart=always
+          RestartSec=5
+          User=${USER}
+          Environment=GIN_MODE=release
+
+          [Install]
+          WantedBy=multi-user.target
+          EOL
+
+          sudo systemctl daemon-reload
+          sudo systemctl enable ${SERVICE_NAME} || true
+          sudo systemctl restart ${SERVICE_NAME}
+
+          # Status output
+          sudo systemctl status ${SERVICE_NAME} --no-pager || true
+          '"
