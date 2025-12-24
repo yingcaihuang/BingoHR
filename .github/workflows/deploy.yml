@@ -112,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       start_time: ${{ steps.start_time.outputs.start_time }}
+    env:
+      ENV_NAME: ${{ needs.determine-environment.outputs.environment }}
     steps:
       - name: Set Start Time
         id: start_time
