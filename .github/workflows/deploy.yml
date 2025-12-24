@@ -80,6 +80,8 @@ jobs:
     name: Deploy to Azure VM via SSH
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      start_time: ${{ steps.start_time.outputs.start_time }}
     steps:
       - name: Set Start Time
         id: start_time
@@ -180,13 +182,19 @@ jobs:
           sudo journalctl -u ${SERVICE_NAME} --no-pager -n 50 || true
           '"
 
-      - name: Notify Teams (Deploy Result)
-        if: always()
+
+  notify:
+    name: Notify Teams
+    needs: [deploy]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Teams Notification
         uses: yingcaihuang/teams-notification-action@main
         with:
           webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          status: ${{ job.status }}
+          status: ${{ needs.deploy.result }}
           version: ${{ github.ref_name }}
           message: Deploy to Azure VM via SSH — ${{ github.event.head_commit.message }}
-          start_time: ${{ steps.start_time.outputs.start_time }}
+          start_time: ${{ needs.deploy.outputs.start_time }}
           title: BingoHR Deploy
