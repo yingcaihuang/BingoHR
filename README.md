@@ -16,17 +16,11 @@
 
 ### 必需的仓库 Secrets
 在 GitHub 仓库 Settings → Secrets → Actions 配置：
-- `AZURE_VM_HOST`：VM 公网 IP 或 DNS
-- `AZURE_VM_USER`：SSH 用户名
-- `AZURE_VM_SSH_KEY`：上述用户的私钥内容（PEM 格式）
-（不再需要GHCR相关的Secrets）
+- `TEAMS_WEBHOOK_URL`：Microsoft Teams Incoming Webhook URL（用于部署成功或失败的消息通知）
 
 ### 工作流说明
 工作流文件：`.github/workflows/deploy.yml`
-- 触发条件：推送到 `main` 或手动触发（Workflow Dispatch）
-- 构建：`api` 目录下构建Linux二进制（`bingohr-api`）
-- 打包：二进制+配置+字体为 `bingohr-api-linux-amd64.tar.gz`
-- 部署：解压到 `/opt/bingohr/api`，生成并重启 `bingohr` systemd 服务，默认监听端口 `8000`
+- 通知：部署Job结束后（成功或失败），自动向Teams推送卡片通知，包含状态/版本/提交信息/运行耗时与跳转链接
 
 ### 本地验证
 ```bash

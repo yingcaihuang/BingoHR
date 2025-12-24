@@ -81,6 +81,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Set Start Time
+        id: start_time
+        run: echo "start_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -175,3 +179,14 @@ jobs:
           sudo systemctl status ${SERVICE_NAME} --no-pager || true
           sudo journalctl -u ${SERVICE_NAME} --no-pager -n 50 || true
           '"
+
+      - name: Notify Teams (Deploy Result)
+        if: always()
+        uses: yingcaihuang/teams-notification-action@main
+        with:
+          webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          version: ${{ github.ref_name }}
+          message: Deploy to Azure VM via SSH — ${{ github.event.head_commit.message }}
+          start_time: ${{ steps.start_time.outputs.start_time }}
+          title: BingoHR Deploy
