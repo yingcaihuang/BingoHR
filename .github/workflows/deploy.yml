@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: "1.20.x"
+  GO_VERSION: "1.25.x"
   APP_NAME: "bingohr-api"
   SERVICE_NAME: "bingohr"
   REMOTE_BASE: "/opt/bingohr"
@@ -56,6 +56,17 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Force module mode (ignore vendor)
+        run: |
+          echo "GOFLAGS=-mod=mod" >> $GITHUB_ENV
+
+      - name: Go modules tidy
+        working-directory: api
+        run: |
+          set -euo pipefail
+          go env GOPATH
+          go mod tidy
 
       - name: Build linux/amd64 binary
         working-directory: api
@@ -237,12 +248,40 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
+      - name: Compose Teams message
+        shell: bash
+        run: |
+          msg="${{ github.event.head_commit.message }}"
+          if [ -z "$msg" ]; then
+            if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+              msg="Tag: ${{ github.ref_name }}"
+            elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              msg="Manual dispatch: ${{ github.actor }}"
+            else
+              msg="Push: ${{ github.ref_name }}"
+            fi
+          fi
+          echo "TEAMS_MESSAGE=$msg" >> $GITHUB_ENV
+
+      - name: Compose Teams title
+        shell: bash
+        run: |
+          status="${{ needs.deploy.result }}"
+          env_name="${{ needs.determine-environment.outputs.environment }}"
+          prefix="[$env_name]"
+          title="$prefix Deploy"
+          if [ "$status" = "failure" ]; then
+            title="$prefix Deploy Failed"
+          elif [ "$status" = "cancelled" ]; then
+            title="$prefix Deploy Cancelled"
+          fi
+          echo "TEAMS_TITLE=$title" >> $GITHUB_ENV
       - name: Send Teams Notification
         uses: yingcaihuang/teams-notification-action@main
         with:
           webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
           status: ${{ needs.deploy.result }}
           version: ${{ github.ref_name }}
-          message: Deploy to Azure VM via SSH — ${{ github.event.head_commit.message }}
+          message: ${{ env.TEAMS_MESSAGE }}
           start_time: ${{ needs.deploy.outputs.start_time }}
-          title: BingoHR Deploy
+          title: ${{ env.TEAMS_TITLE }}

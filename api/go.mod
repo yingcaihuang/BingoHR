@@ -1,6 +1,6 @@
 module hr-api
 
-go 1.25.1
+go 1.25
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
