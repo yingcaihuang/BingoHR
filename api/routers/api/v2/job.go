@@ -52,7 +52,7 @@ func GetJobs(c *gin.Context) {
 
 type JobAddBody struct {
 	Name   string `json:"name" binding:"required,max=64"`
-	Demand string `json:"demand" binding:"required"`
+	Demand string `json:"demand"`
 	Desc   string `json:"desc"`
 }
 
@@ -92,7 +92,7 @@ func AddJob(c *gin.Context) {
 
 type JobEditBody struct {
 	Id     int    `json:"id" binding:"required,min=1"`
-	Name   string `json:"name" binding:"required,max=64"`
+	Name   string `json:"name" binding:"max=64"`
 	Demand string `json:"demand"`
 	Desc   string `json:"desc"`
 }
@@ -108,37 +108,55 @@ type JobEditBody struct {
 func EditJob(c *gin.Context) {
 	var appG = app.Gin{C: c}
 
-	var bodyData JobEditBody
-	if err := c.ShouldBindJSON(&bodyData); err != nil {
+	var data JobEditBody
+	if err := c.ShouldBindJSON(&data); err != nil {
 		appG.FailResponse(err.Error())
 		return
 	}
 
-	jobService := job_service.Job{
-		Id:     bodyData.Id,
-		Name:   bodyData.Name,
-		Demand: bodyData.Demand,
-		Desc:   bodyData.Desc,
-	}
+	var resp = make(map[string]interface{})
+	resp["id"] = data.Id
 
-	exists, err := jobService.ExistByID()
+	service := job_service.Job{Id: data.Id}
+	existsData, err := service.GetJob()
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
 	}
 
-	if !exists {
-		appG.FailResponse(fmt.Sprintf("招聘需求不存在: %d", bodyData.Id))
+	if existsData.ID == 0 {
+		appG.FailResponse(fmt.Sprintf("招聘需求不存在: %d", data.Id))
 		return
 	}
 
-	err = jobService.Edit()
+	if len(data.Name) > 0 && data.Name != existsData.Name {
+		service.Name = data.Name
+		resp["name"] = data.Name
+	} else {
+		service.Name = existsData.Name
+	}
+
+	if len(data.Demand) > 0 && data.Demand != existsData.Demand {
+		service.Demand = data.Demand
+		resp["demand"] = data.Demand
+	} else {
+		service.Demand = existsData.Demand
+	}
+
+	if len(data.Desc) > 0 && data.Desc != existsData.Desc {
+		service.Desc = data.Desc
+		resp["desc"] = data.Desc
+	} else {
+		service.Desc = existsData.Desc
+	}
+
+	err = service.Edit()
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
 	}
 
-	appG.SuccessResponse(bodyData)
+	appG.SuccessResponse(resp)
 }
 
 type JobURI struct {

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `jobs` (
 CREATE TABLE IF NOT EXISTS `resumes` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `job_id` int unsigned NOT NULL DEFAULT '0' COMMENT '关联的招聘职位ID',
+  `url` varchar(1024) NOT NULL DEFAULT '' COMMENT '上传Blob Storage Service后简历的URL地址'
   `filename` varchar(128) NOT NULL DEFAULT '' COMMENT '上传简历的文件名',
   `size` int unsigned NOT NULL DEFAULT '0' COMMENT '简历文件大小',
   `create_uid` int unsigned NOT NULL DEFAULT '0' COMMENT '上传人',
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `resume_analyze_records` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `resume_id` int unsigned NOT NULL DEFAULT '0' COMMENT '关联的简历ID',
   `status` varchar(32) NOT NULL DEFAULT '' COMMENT '分析状态 pending分析中 completed已完成 failed失败',
-  `result` text COMMENT 'AI分析结果',
+  `result` mediumtext COMMENT 'AI分析结果',
   `create_uid` int unsigned NOT NULL DEFAULT '0' COMMENT '创建分析的用户',
   `create_time` int unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
   PRIMARY KEY (`id`),

@@ -1,18 +1,20 @@
 package models
 
 import (
+	"hr-api/pkg/util"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Resume struct {
 	ID         int    `json:"id" gorm:"primaryKey"`
 	JobId      int    `json:"job_id"`
 	FileName   string `json:"filename" gorm:"column:filename"`
+	Url        string `json:"-" gorm:"column:url"`
 	Size       int    `json:"size"`
 	CreateUid  int    `json:"create_uid"`
-	CreateUser string `json:"create_user"`
+	CreateUser string `json:"create_user" gorm:"-"`
 	CreateTime int    `json:"create_time"`
 	UpdateTime int    `json:"update_time"`
 	JobName    string `json:"job_name" gorm:"->"`
@@ -87,9 +89,12 @@ func GetResumeTotal(keyword string, maps interface{}) (int, error) {
 // AddResume add a single resume
 func AddResume(data map[string]interface{}) error {
 	now := int(time.Now().Unix())
+	rawUrl := data["url"].(string)
+	filename := util.GetFilenameFromURL(rawUrl)
 	job := Resume{
 		JobId:      data["job_id"].(int),
-		FileName:   data["filename"].(string),
+		FileName:   filename,
+		Url:        rawUrl,
 		Size:       data["size"].(int),
 		CreateTime: now,
 		CreateUid:  data["create_uid"].(int),

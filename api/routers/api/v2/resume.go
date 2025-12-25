@@ -52,15 +52,15 @@ func GetResumes(c *gin.Context) {
 }
 
 type ResumeAddBody struct {
-	JobId    int    `json:"job_id" binding:"required,min=1"`
-	FileName string `json:"filename" binding:"required,max=32"`
-	Size     int    `json:"size" binding:"required,min=1"`
+	JobId int    `json:"job_id" binding:"required,min=1"`
+	Url   string `json:"url" binding:"required,max=1024"`
+	Size  int    `json:"size" binding:"required,min=1"`
 }
 
 // @Summary Add a resume
-// @Produce  json
+// @Produce json
 // @Param job_id body int true "JobId"
-// @Param filename body string true "FileName"
+// @Param url body string true "Url"
 // @Param size body int true "Size"
 // @Success 200 {object} app.Response
 // @Failure 500 {object} app.Response
@@ -89,7 +89,7 @@ func AddResume(c *gin.Context) {
 	currentUid := util.GetCurrentUid(c)
 	service := resume_service.Resume{
 		JobId:     data.JobId,
-		FileName:  data.FileName,
+		Url:       data.Url,
 		Size:      data.Size,
 		CreateUid: currentUid,
 	}
@@ -105,12 +105,12 @@ func AddResume(c *gin.Context) {
 
 type ResumeEditBody struct {
 	Id       int    `json:"id" binding:"required,min=1"`
-	JobId    int    `json:"job_id" binding:"required,min=1"`
-	FileName string `json:"filename" binding:"required,max=32"`
+	JobId    int    `json:"job_id"`
+	FileName string `json:"filename"`
 }
 
 // @Summary Edit a resume
-// @Produce  json
+// @Produce json
 // @Param id body int true "Id"
 // @Param job_id body string false "JobId"
 // @Param filename body string false "FileName"
@@ -139,7 +139,7 @@ func EditResume(c *gin.Context) {
 		return
 	}
 
-	if existData.JobId != data.JobId {
+	if data.JobId > 0 && existData.JobId != data.JobId {
 		jobService := job_service.Job{Id: data.JobId}
 		exists, err := jobService.ExistByID()
 		if err != nil {
@@ -153,12 +153,14 @@ func EditResume(c *gin.Context) {
 		}
 		service.JobId = data.JobId
 	} else {
+		data.JobId = existData.JobId
 		service.JobId = existData.JobId
 	}
 
-	if existData.FileName != data.FileName {
+	if len(data.FileName) > 0 && existData.FileName != data.FileName {
 		service.FileName = data.FileName
 	} else {
+		data.FileName = existData.FileName
 		service.FileName = existData.FileName
 	}
 
@@ -176,7 +178,7 @@ type ResumeURI struct {
 }
 
 // @Summary Delete a resume
-// @Produce  json
+// @Produce json
 // @Param id path int true "Id"
 // @Success 200 {object} app.Response
 // @Failure 500 {object} app.Response

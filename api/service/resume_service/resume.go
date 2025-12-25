@@ -13,6 +13,7 @@ import (
 type Resume struct {
 	Id         int
 	JobId      int
+	Url        string
 	FileName   string
 	Size       int
 	CreateUid  int
@@ -28,7 +29,7 @@ type Resume struct {
 func (r *Resume) Add() error {
 	resume := map[string]interface{}{
 		"job_id":     r.JobId,
-		"filename":   r.FileName,
+		"url":        r.Url,
 		"size":       r.Size,
 		"create_uid": r.CreateUid,
 	}

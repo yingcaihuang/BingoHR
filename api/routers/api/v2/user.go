@@ -104,13 +104,13 @@ func AddUser(c *gin.Context) {
 
 type UserEditBody struct {
 	Id       int    `json:"id" binding:"required,min=1"`
-	Password string `json:"password" binding:"required,max=32"`
-	Email    string `json:"email" binding:"required,max=128"`
-	Roles    []int  `json:"roles" binding:"required,dive,required,min=1"`
+	Password string `json:"password" binding:"max=32"`
+	Email    string `json:"email" binding:"max=128"`
+	Roles    []int  `json:"roles"`
 }
 
-// @Summary Edit a role
-// @Produce  json
+// @Summary Edit a user
+// @Produce json
 // @Param id body int true "Id"
 // @Param password body string false "Password"
 // @Param email body string false "Email"
@@ -125,6 +125,9 @@ func EditUser(c *gin.Context) {
 		appG.FailResponse(err.Error())
 		return
 	}
+
+	var resp = make(map[string]interface{})
+	resp["id"] = data.Id
 
 	service := user_service.User{
 		Id:       data.Id,
@@ -143,10 +146,18 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
-	if data.Email != existsData.Email {
+	if len(data.Email) > 0 && data.Email != existsData.Email {
 		service.Email = data.Email
+		resp["email"] = data.Email
 	} else {
 		service.Email = existsData.Email
+	}
+
+	if len(data.Password) > 0 {
+		resp["password"] = "*"
+	}
+	if len(data.Roles) > 0 {
+		resp["roles"] = data.Roles
 	}
 
 	err = service.Edit()
@@ -155,7 +166,7 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
-	appG.SuccessResponse(data)
+	appG.SuccessResponse(resp)
 }
 
 type UserURI struct {

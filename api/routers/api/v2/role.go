@@ -86,7 +86,7 @@ func AddRole(c *gin.Context) {
 
 type RoleEditBody struct {
 	Id   int    `json:"id" binding:"required,min=1"`
-	Name string `json:"name" binding:"required,max=32"`
+	Name string `json:"name" binding:"max=32"`
 }
 
 // @Summary Edit a role
@@ -104,12 +104,8 @@ func EditRole(c *gin.Context) {
 		return
 	}
 
-	roleService := role_service.Role{
-		Id:   roleData.Id,
-		Name: roleData.Name,
-	}
-
-	exists, err := roleService.ExistByID()
+	serice := role_service.Role{Id: roleData.Id}
+	exists, err := serice.ExistByID()
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
@@ -120,7 +116,13 @@ func EditRole(c *gin.Context) {
 		return
 	}
 
-	err = roleService.Edit()
+	if len(roleData.Name) == 0 {
+		appG.FailResponse("角色名称不能为空")
+		return
+	}
+	serice.Name = roleData.Name
+
+	err = serice.Edit()
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return

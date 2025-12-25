@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -82,13 +82,13 @@ func GetUserTotal(keyword string, maps interface{}) (int, error) {
 
 // GetUser Get a single user based on ID
 func GetUser(id int) (*User, error) {
-	var user User
-	err := db.Model(&User{}).Where("id = ? ", id).First(&user).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var d User
+	err := db.Model(&User{}).Where("id = ? ", id).First(&d).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
-	return &user, nil
+	return &d, nil
 }
 
 func GetUserByName(name string) (*User, error) {

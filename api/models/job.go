@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Job struct {
@@ -12,7 +12,7 @@ type Job struct {
 	Demand     string `json:"demand"`
 	Desc       string `json:"desc"`
 	CreateUid  int    `json:"create_uid"`
-	CreateUser string `json:"create_user"`
+	CreateUser string `json:"create_user" gorm:"-"`
 	CreateTime int    `json:"create_time"`
 	UpdateTime int    `json:"update_time"`
 }
@@ -57,13 +57,13 @@ func GetJobs(page int, limit int, keyword string, maps interface{}) ([]*Job, err
 
 // GetJob Get a job by id
 func GetJob(id int) (*Job, error) {
-	var job Job
-	err := db.Model(&Job{}).Where("id = ? ", id).First(&job).Error
+	var d Job
+	err := db.Model(&Job{}).Where("id = ? ", id).First(&d).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
-	return &job, nil
+	return &d, nil
 }
 
 // GetJobTotal counts the total number of jobs based on the constraint
@@ -92,7 +92,7 @@ func AddJob(data map[string]interface{}) error {
 		CreateTime: now,
 		CreateUid:  data["create_uid"].(int),
 	}
-	if err := db.Create(&job).Error; err != nil {
+	if err := db.Debug().Create(&job).Error; err != nil {
 		return err
 	}
 

@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets v0.12.0
+	github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus v1.10.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.3
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/astaxie/beego v1.9.3-0.20171218111859-f16688817aa4
@@ -15,7 +16,6 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/jinzhu/gorm v1.9.16
 	github.com/openai/openai-go/v2 v2.7.1
 	github.com/pdfcpu/pdfcpu v0.11.1
 	github.com/swaggo/files v1.0.1
@@ -82,13 +82,13 @@ require (
 )
 
 require (
+	github.com/Azure/go-amqp v1.4.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/hhrutter/lzw v1.0.0 // indirect
 	github.com/hhrutter/pkcs7 v0.2.0 // indirect
 	github.com/hhrutter/tiff v1.0.2 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect

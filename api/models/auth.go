@@ -1,10 +1,7 @@
 package models
 
 import (
-	"errors"
-	"strings"
-
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Auth struct {
@@ -22,10 +19,7 @@ func CheckAuth(username, password string) (int, error) {
 	var auth Auth
 	err := db.Select("id").Where(Auth{Username: username, Password: password}).First(&auth).Error
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || (strings.HasSuffix(err.Error(), "record not found")) {
-			return 0, nil
-		}
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return 0, err
 	}
 
