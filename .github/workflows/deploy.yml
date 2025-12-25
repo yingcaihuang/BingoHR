@@ -57,6 +57,10 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Force module mode (ignore vendor)
+        run: |
+          echo "GOFLAGS=-mod=mod" >> $GITHUB_ENV
+
       - name: Go modules tidy
         working-directory: api
         run: |
