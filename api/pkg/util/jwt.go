@@ -1,30 +1,38 @@
 package util
 
 import (
+	"hr-api/pkg/app"
+	"hr-api/pkg/e"
+	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecret []byte
 
 type Claims struct {
+	Id       int    `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // GenerateToken generate tokens used for auth
-func GenerateToken(username, password string) (string, error) {
+func GenerateToken(id int, username, password string) (string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(3 * time.Hour)
+	expireTime := nowTime.Add(7 * 24 * time.Hour)
 
 	claims := Claims{
-		EncodeMD5(username),
+		id,
+		username,
 		EncodeMD5(password),
-		jwt.StandardClaims{
-			ExpiresAt: expireTime.Unix(),
-			Issuer:    "gin-blog",
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expireTime),
+			IssuedAt:  jwt.NewNumericDate(nowTime),
+			NotBefore: jwt.NewNumericDate(nowTime),
+			Issuer:    "bingo-hr",
 		},
 	}
 
@@ -47,4 +55,18 @@ func ParseToken(token string) (*Claims, error) {
 	}
 
 	return nil, err
+}
+
+// GetcurrentUI
+func GetCurrentUid(c *gin.Context) int {
+	appG := app.Gin{C: c}
+
+	if val, exists := c.Get("uid"); exists {
+		if uid, ok := val.(int); ok {
+			return uid
+		}
+	}
+
+	appG.Response(http.StatusUnauthorized, e.ERROR_AUTH, nil)
+	return 0
 }

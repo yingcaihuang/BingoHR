@@ -64,12 +64,12 @@ func GetTags(pageNum int, pageSize int, maps interface{}) ([]Tag, error) {
 
 // GetTagTotal counts the total number of tags based on the constraint
 func GetTagTotal(maps interface{}) (int, error) {
-	var count int
+	var count int64
 	if err := db.Model(&Tag{}).Where(maps).Count(&count).Error; err != nil {
 		return 0, err
 	}
 
-	return count, nil
+	return int(count), nil
 }
 
 // ExistTagByID determines whether a Tag exists based on the ID

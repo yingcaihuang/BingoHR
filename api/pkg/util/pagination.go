@@ -1,19 +1,24 @@
 package util
 
 import (
-	"github.com/unknwon/com"
 	"github.com/gin-gonic/gin"
-
-	"github.com/EDDYCJY/go-gin-example/pkg/setting"
+	"github.com/unknwon/com"
 )
 
-// GetPage get page parameters
+// GetPage get page parameter
 func GetPage(c *gin.Context) int {
-	result := 0
-	page := com.StrTo(c.Query("page")).MustInt()
-	if page > 0 {
-		result = (page - 1) * setting.AppSetting.PageSize
-	}
+	page := c.DefaultQuery("page", "0")
+	return com.StrTo(page).MustInt()
+}
 
-	return result
+// GetLimit get limit parameter
+func GetLimit(c *gin.Context) int {
+	limit := c.DefaultQuery("limit", "0")
+	return com.StrTo(limit).MustInt()
+}
+
+// GetCacheClear get cache_clear parameter
+func GetCacheClear(c *gin.Context) int {
+	cache_clear := c.DefaultQuery("cache_clear", "0")
+	return com.StrTo(cache_clear).MustInt()
 }

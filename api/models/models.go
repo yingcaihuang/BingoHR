@@ -1,14 +1,20 @@
 package models
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 
-	"github.com/EDDYCJY/go-gin-example/pkg/setting"
 	"time"
+
+	"hr-api/pkg/setting"
 )
 
 var db *gorm.DB
@@ -23,92 +29,73 @@ type Model struct {
 // Setup initializes the database instance
 func Setup() {
 	var err error
-	db, err = gorm.Open(setting.DatabaseSetting.Type, fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
+
+	baseDSN := "%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+	if len(setting.DatabaseSetting.Cert) > 0 {
+		caCert, err := os.ReadFile(setting.DatabaseSetting.Cert)
+		if err != nil {
+			log.Fatalf("models.Setup err: %v", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			log.Fatalf("models.Setup err: %v", err)
+		}
+
+		tlsConfig := &tls.Config{
+			RootCAs:    caCertPool,
+			ServerName: "webtest-server.mysql.database.azure.com",
+			MinVersion: tls.VersionTLS12,
+		}
+
+		err = mysqlDriver.RegisterTLSConfig("mysql-cert", tlsConfig)
+		if err != nil {
+			log.Fatalf("models.Setup err: %v", err)
+		}
+		baseDSN += "&tls=mysql-cert"
+	}
+
+	dsn := fmt.Sprintf(baseDSN,
 		setting.DatabaseSetting.User,
 		setting.DatabaseSetting.Password,
 		setting.DatabaseSetting.Host,
-		setting.DatabaseSetting.Name))
+		setting.DatabaseSetting.Name)
 
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: false,
+		}})
 	if err != nil {
-		log.Fatalf("models.Setup err: %v", err)
+		log.Fatalf("Failed to connect DB: %v", err)
 	}
 
-	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-		return setting.DatabaseSetting.TablePrefix + defaultTableName
+	// 设置连接池
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Failed to get raw database: %v", err)
 	}
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
-	db.SingularTable(true)
-	db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForCreateCallback)
-	db.Callback().Update().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallback)
-	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
-	db.DB().SetMaxIdleConns(10)
-	db.DB().SetMaxOpenConns(100)
 }
 
 // CloseDB closes database connection (unnecessary)
-func CloseDB() {
-	defer db.Close()
-}
-
-// updateTimeStampForCreateCallback will set `CreatedOn`, `ModifiedOn` when creating
-func updateTimeStampForCreateCallback(scope *gorm.Scope) {
-	if !scope.HasError() {
-		nowTime := time.Now().Unix()
-		if createTimeField, ok := scope.FieldByName("CreatedOn"); ok {
-			if createTimeField.IsBlank {
-				createTimeField.Set(nowTime)
-			}
-		}
-
-		if modifyTimeField, ok := scope.FieldByName("ModifiedOn"); ok {
-			if modifyTimeField.IsBlank {
-				modifyTimeField.Set(nowTime)
-			}
-		}
+func CloseDB() error {
+	if db == nil {
+		return nil
 	}
-}
 
-// updateTimeStampForUpdateCallback will set `ModifiedOn` when updating
-func updateTimeStampForUpdateCallback(scope *gorm.Scope) {
-	if _, ok := scope.Get("gorm:update_column"); !ok {
-		scope.SetColumn("ModifiedOn", time.Now().Unix())
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get raw database: %w", err)
 	}
-}
 
-// deleteCallback will set `DeletedOn` where deleting
-func deleteCallback(scope *gorm.Scope) {
-	if !scope.HasError() {
-		var extraOption string
-		if str, ok := scope.Get("gorm:delete_option"); ok {
-			extraOption = fmt.Sprint(str)
-		}
-
-		deletedOnField, hasDeletedOnField := scope.FieldByName("DeletedOn")
-
-		if !scope.Search.Unscoped && hasDeletedOnField {
-			scope.Raw(fmt.Sprintf(
-				"UPDATE %v SET %v=%v%v%v",
-				scope.QuotedTableName(),
-				scope.Quote(deletedOnField.DBName),
-				scope.AddToVars(time.Now().Unix()),
-				addExtraSpaceIfExist(scope.CombinedConditionSql()),
-				addExtraSpaceIfExist(extraOption),
-			)).Exec()
-		} else {
-			scope.Raw(fmt.Sprintf(
-				"DELETE FROM %v%v%v",
-				scope.QuotedTableName(),
-				addExtraSpaceIfExist(scope.CombinedConditionSql()),
-				addExtraSpaceIfExist(extraOption),
-			)).Exec()
-		}
+	if err := sqlDB.Close(); err != nil {
+		return fmt.Errorf("failed to close database: %w", err)
 	}
-}
 
-// addExtraSpaceIfExist adds a separator
-func addExtraSpaceIfExist(str string) string {
-	if str != "" {
-		return " " + str
-	}
-	return ""
+	db = nil
+	return nil
 }

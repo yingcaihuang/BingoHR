@@ -1,12 +1,12 @@
 package auth_service
 
-import "github.com/EDDYCJY/go-gin-example/models"
+import "hr-api/models"
 
 type Auth struct {
 	Username string
 	Password string
 }
 
-func (a *Auth) Check() (bool, error) {
+func (a *Auth) Check() (int, error) {
 	return models.CheckAuth(a.Username, a.Password)
 }
