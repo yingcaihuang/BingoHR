@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: "1.20.x"
+  GO_VERSION: "1.25.x"
   APP_NAME: "bingohr-api"
   SERVICE_NAME: "bingohr"
   REMOTE_BASE: "/opt/bingohr"
@@ -56,6 +56,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Go modules tidy
+        working-directory: api
+        run: |
+          set -euo pipefail
+          go env GOPATH
+          go mod tidy
 
       - name: Build linux/amd64 binary
         working-directory: api
