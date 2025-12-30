@@ -185,15 +185,11 @@ func LoginCallback(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	// 清除 session
-	sessionID, err := c.Cookie("session_id")
-	redis := cache.RedisCache{}
-	if err == nil {
-		redis.Delete(c, sessionID)
-	}
+	appG := app.Gin{C: c}
 
 	// 清除 cookie
 	c.SetCookie("session_id", "", -1, "/", "", false, true)
+	c.SetCookie("x-token", "", -1, "/", "", false, true)
 
 	keyVault, err := keyvault.GetKeyVaultConf()
 	if err != nil {
@@ -205,7 +201,7 @@ func Logout(c *gin.Context) {
 	logoutURL := "https://login.microsoftonline.com/" + keyVault.TenantID + "/oauth2/v2.0/logout"
 	logoutURL += "?post_logout_redirect_uri=" + keyVault.FrontendURL
 
-	c.Redirect(http.StatusFound, logoutURL)
+	appG.SuccessResponse(logoutURL)
 }
 
 func generateRandomString(n int) (string, error) {

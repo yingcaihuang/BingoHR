@@ -1,6 +1,6 @@
 module hr-api
 
-go 1.25
+go 1.25.1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
@@ -18,6 +18,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/openai/openai-go/v2 v2.7.1
 	github.com/pdfcpu/pdfcpu v0.11.1
+	github.com/pkg/errors v0.9.1
+	github.com/pquerna/otp v1.5.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
@@ -90,7 +92,6 @@ require (
 	github.com/hhrutter/pkcs7 v0.2.0 // indirect
 	github.com/hhrutter/tiff v1.0.2 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

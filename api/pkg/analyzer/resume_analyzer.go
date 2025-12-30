@@ -51,7 +51,7 @@ func (ra *ResumeAnalyzer) AnalyzeFile(ctx context.Context, jobTitle string,
 		return nil, fmt.Errorf("解析简历文件失败: %v", err)
 	}
 
-	log.Printf("成功提取文本，长度: %d 字符", len(resumeText))
+	log.Printf("成功提取文本，长度: %d 字符, %s", len(resumeText), resumeText)
 
 	// 2. 使用AI分析内容
 	log.Printf("正在使用Azure OpenAI分析简历...")

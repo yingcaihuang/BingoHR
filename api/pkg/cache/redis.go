@@ -101,7 +101,7 @@ func (r *RedisCache) Set(ctx context.Context, key string, value interface{}, exp
 func (r *RedisCache) Get(ctx context.Context, key string, dest interface{}) error {
 	val, err := r.client.Get(ctx, key).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return ErrCacheMiss
 		}
 		return fmt.Errorf("获取缓存失败[key=%s]: %w", key, err)

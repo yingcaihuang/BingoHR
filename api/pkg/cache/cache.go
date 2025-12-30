@@ -7,13 +7,14 @@ import (
 )
 
 const (
-	CACHE_ARTICLE   = "ARTICLE"
-	CACHE_TAG       = "TAG"
-	CACHE_USER      = "USER"
-	CACHE_ROLE      = "ROLE"
-	CACHE_ROLE_PERM = "ROLE_PERM"
-	CACHE_JOB       = "JOB"
-	CACHE_RESUME    = "RESUME"
+	CACHE_ARTICLE               = "ARTICLE"
+	CACHE_TAG                   = "TAG"
+	CACHE_USER                  = "USER"
+	CACHE_ROLE                  = "ROLE"
+	CACHE_ROLE_PERM             = "ROLE_PERM"
+	CACHE_JOB                   = "JOB"
+	CACHE_RESUME                = "RESUME"
+	CACHE_RESUME_ANALYZE_RECORD = "RESUME_ANALYZE_RECORD"
 )
 
 // Cache 定义缓存接口，便于后续扩展其他缓存实现

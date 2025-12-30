@@ -269,9 +269,6 @@ github.com/hhrutter/pkcs7
 # github.com/hhrutter/tiff v1.0.2
 ## explicit; go 1.19
 github.com/hhrutter/tiff
-# github.com/jinzhu/gorm v1.9.16
-## explicit; go 1.12
-github.com/jinzhu/gorm
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
@@ -295,8 +292,6 @@ github.com/kylelemons/godebug/pretty
 ## explicit; go 1.18
 github.com/leodido/go-urn
 github.com/leodido/go-urn/scim/schema
-# github.com/lib/pq v1.10.9
-## explicit; go 1.13
 # github.com/mailru/easyjson v0.7.6
 ## explicit; go 1.12
 github.com/mailru/easyjson/buffer
@@ -372,6 +367,12 @@ github.com/pkg/browser
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pquerna/otp v1.5.0
+## explicit; go 1.12
+github.com/pquerna/otp
+github.com/pquerna/otp/hotp
+github.com/pquerna/otp/internal
+github.com/pquerna/otp/totp
 # github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
 ## explicit
 # github.com/swaggo/files v1.0.1

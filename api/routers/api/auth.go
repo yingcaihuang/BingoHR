@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hr-api/models"
 	"hr-api/pkg/keyvault"
 	"math/big"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,6 +58,8 @@ func GetAuth(c *gin.Context) {
 		return
 	}
 
+	u, _ := models.GetUser(uid)
+
 	token, err := util.GenerateToken(uid, auth.Username, auth.Password)
 	if err != nil {
 		appG.IntervalErrorResponse("Token生成失败, 请稍后再试")
@@ -63,7 +67,8 @@ func GetAuth(c *gin.Context) {
 	}
 
 	appG.SuccessResponse(map[string]string{
-		"token": token,
+		"token":      token,
+		"otp_enable": strconv.Itoa(u.OtpEnable),
 	})
 }
 

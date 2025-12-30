@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"hr-api/pkg/bus"
 	"hr-api/pkg/cache"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 
@@ -30,6 +36,13 @@ func init() {
 // @license.name MIT
 // @license.url https://hr-api/blob/master/LICENSE
 func main() {
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
 	gin.SetMode(setting.ServerSetting.RunMode)
 
 	routersInit := routers.InitRouter()
@@ -47,6 +60,15 @@ func main() {
 	}
 
 	log.Printf("[info] start http server listening %s", endPoint)
+
+	// 从service bus消费需要分析的简历
+	go func() {
+		log.Println("resume worker started")
+		if err := bus.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			log.Println("resume worker error:", err)
+			stop() // 真异常才停止程序
+		}
+	}()
 
 	server.ListenAndServe()
 

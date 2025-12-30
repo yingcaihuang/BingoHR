@@ -50,6 +50,35 @@ func GetUsers(c *gin.Context) {
 	})
 }
 
+// @Summary Get current login user's profile
+// @Produce  json
+// @Success 200 {object} app.Response
+// @Failure 500 {object} app.Response
+// @Router /api/v2/user/list [get]
+func GetUserProfile(c *gin.Context) {
+	appG := app.Gin{C: c}
+	uid := util.GetCurrentUid(c)
+	service := user_service.User{Id: uid}
+
+	checkUser, err := service.GetUser()
+	if err != nil {
+		appG.IntervalErrorResponse(err.Error())
+		return
+	}
+
+	if checkUser.ID == 0 {
+		appG.UnauthorizedResponse()
+		return
+	}
+
+	appG.SuccessResponse(map[string]interface{}{
+		"id":       uid,
+		"uid":      uid,
+		"username": checkUser.Username,
+		"email":    checkUser.Email,
+	})
+}
+
 type UserAddBody struct {
 	Username string `json:"username" binding:"required,max=32"`
 	Password string `json:"password" binding:"required,max=32"`

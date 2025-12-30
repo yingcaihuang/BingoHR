@@ -41,6 +41,9 @@ func InitRouter() *gin.Engine {
 	// Microsoft Entra ID 相关
 	apiV2.GET("/login", v2.Login)
 	apiV2.GET("/auth/callback", v2.LoginCallback)
+	// 2FA 二次认证
+	apiV2.GET("/otp/totp", v2.GetOtpTotp)
+	apiV2.GET("/otp/totp/validate", v2.ValidateOtpTotp)
 
 	// 公共上传接口
 	apiV2.POST("/upload", api.UploadFile)
@@ -62,6 +65,7 @@ func InitRouter() *gin.Engine {
 
 		// 用户相关接口
 		authGroup.GET("/user/list", v2.GetUsers).Name("rest.user.list")
+		authGroup.GET("/user/profile", v2.GetUserProfile).Name("rest.user.profile")
 		authGroup.POST("/user/create", v2.AddUser).Name("rest.user.create")
 		authGroup.PUT("/user/update", v2.EditUser).Name("rest.user.update")
 		authGroup.DELETE("/user/delete/:id", v2.DeleteUser).Name("rest.user.delete")
@@ -78,6 +82,24 @@ func InitRouter() *gin.Engine {
 		authGroup.POST("/resume/create", v2.AddResume).Name("rest.resume.create")
 		authGroup.PUT("/resume/update", v2.EditResume).Name("rest.resume.update")
 		authGroup.DELETE("/resume/delete/:id", v2.DeleteResume).Name("rest.resume.delete")
+
+		// 简历的智能分享相关接口
+		authGroup.GET("/analyze/record/list", v2.GetRecords).Name("rest.analyze.record.list")
+		authGroup.POST("/analyze/record/create", v2.AddResumeAnalyze).Name("rest.analyze.record.create")
+
+		// 查队列
+		//authGroup.POST("/queue/status", v2.GetQueueStatus).Name("rest.queue.status")
+
+		stats := authGroup.Group("/stats")
+		{
+			//stats.GET("/dashboard", v2.DashboardHandler).Name("rest.stats.dashboard")
+			stats.GET("/status", v2.StatusStatsHandler).Name("rest.stats.status")               // 按状态统计数量
+			stats.GET("/degree", v2.DegreeStatsHandler).Name("rest.stats.degree")               //按学历分布统计
+			stats.GET("/location", v2.LocationStatsHandler).Name("rest.stats.location")         //按地区统计
+			stats.GET("/score", v2.ScoreRangeStatistics).Name("rest.stats.score")               //Score 分段统计
+			stats.GET("/top/location", v2.TopLocation).Name("rest.stats.top.location")          //Top N 地区
+			stats.GET("/top/institution", v2.TopInstitution).Name("rest.stats.top.institution") //Top N 学校
+		}
 
 		// 返回所有接口地址的名称
 		authGroup.GET("/all/perms", func(c *gin.Context) {

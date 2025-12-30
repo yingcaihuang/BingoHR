@@ -47,11 +47,11 @@ type PersonalInfo struct {
 }
 
 type WorkExperience struct {
-	Company          string   `json:"company"`
-	Position         string   `json:"position"`
-	Duration         string   `json:"duration"`
-	Responsibilities []string `json:"responsibilities"`
-	Achievements     []string `json:"achievements"`
+	Company          string      `json:"company"`
+	Position         string      `json:"position"`
+	Duration         string      `json:"duration"`
+	Responsibilities interface{} `json:"responsibilities"`
+	Achievements     interface{} `json:"achievements"`
 }
 
 type Education struct {
@@ -177,15 +177,7 @@ func (c *AzureOpenAIClient) callOnce(
 %s
 
 严格返回如下 JSON 结构：
-{
-  "personal_info": { "name": "", "email": "", "phone": "", "location": "", "links": [] },
-  "summary": "",
-  "work_experience": [],
-  "education": [],
-  "skills": { "technical": [], "soft": [], "languages": [], "certifications": [] },
-  "analysis": { "strengths": [], "weaknesses": [], "recommendations": [], "match_score": 0 },
-  "metadata": { "analysis_date": "", "word_count": 0, "estimated_yoe": 0 }
-}`, resumeText)
+ {"personal_info":{"name":"","email":"","phone":"","location":"","links":[]},"summary":"","work_experience":[{"company":"","position":"","duration":"","responsibilities":null,"achievements":null},{"company":"","position":"","duration":"","responsibilities":null,"achievements":null}],"education":[{"institution":"","degree":"","field":"","graduation_year":""}],"skills":{"technical":[],"soft":[],"languages":[],"certifications":[]},"analysis":{"strengths":[],"weaknesses":[],"recommendations":[],"match_score":0},"metadata":{"analysis_date":"","word_count":0,"estimated_yoe":0}}`, resumeText)
 
 	var lastErr error
 

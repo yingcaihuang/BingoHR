@@ -1,12 +1,15 @@
 package v2
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 
 	"hr-api/models"
 	"hr-api/pkg/app"
+	"hr-api/pkg/bus"
+	"hr-api/pkg/keyvault"
 	"hr-api/pkg/util"
 	"hr-api/service/job_service"
 	"hr-api/service/resume_service"
@@ -75,13 +78,13 @@ func AddResume(c *gin.Context) {
 	}
 
 	jobService := job_service.Job{Id: data.JobId}
-	exists, err := jobService.ExistByID()
+	job, err := jobService.GetJob()
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
 	}
 
-	if !exists {
+	if job.ID == 0 {
 		appG.FailResponse(fmt.Sprintf("招聘需求不存在: %d", data.JobId))
 		return
 	}
@@ -94,7 +97,22 @@ func AddResume(c *gin.Context) {
 		CreateUid: currentUid,
 	}
 
-	err = service.Add()
+	newId, err := service.Add()
+	if err != nil {
+		appG.IntervalErrorResponse(err.Error())
+		return
+	}
+
+	// 将简历和职位信息推送给队列Bus
+	resumeBus := &models.ResumeBus{
+		ResumeId:  newId,
+		FileName:  util.GetFilenameFromURL(data.Url),
+		JobName:   job.Name,
+		JobDemand: job.Demand,
+		JobDesc:   job.Desc,
+		Url:       data.Url,
+	}
+	err = uploadToBusQueue(c, resumeBus)
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
@@ -139,18 +157,22 @@ func EditResume(c *gin.Context) {
 		return
 	}
 
+	var jobChanged bool = false
+	var job *models.Job
+
 	if data.JobId > 0 && existData.JobId != data.JobId {
 		jobService := job_service.Job{Id: data.JobId}
-		exists, err := jobService.ExistByID()
+		job, err = jobService.GetJob()
 		if err != nil {
 			appG.IntervalErrorResponse(err.Error())
 			return
 		}
 
-		if !exists {
+		if job.ID == 0 {
 			appG.FailResponse(fmt.Sprintf("招聘需求不存在: %d", data.JobId))
 			return
 		}
+		jobChanged = true
 		service.JobId = data.JobId
 	} else {
 		data.JobId = existData.JobId
@@ -168,6 +190,23 @@ func EditResume(c *gin.Context) {
 	if err != nil {
 		appG.IntervalErrorResponse(err.Error())
 		return
+	}
+
+	if jobChanged {
+		// 将简历和职位信息推送给队列Bus
+		resumeBus := &models.ResumeBus{
+			ResumeId:  existData.ID,
+			FileName:  existData.FileName,
+			JobName:   job.Name,
+			JobDemand: job.Demand,
+			JobDesc:   job.Desc,
+			Url:       existData.Url,
+		}
+		err = uploadToBusQueue(c, resumeBus)
+		if err != nil {
+			appG.IntervalErrorResponse(err.Error())
+			return
+		}
 	}
 
 	appG.SuccessResponse(data)
@@ -210,4 +249,25 @@ func DeleteResume(c *gin.Context) {
 	}
 
 	appG.SuccessResponse(uri)
+}
+
+func uploadToBusQueue(c *gin.Context, r *models.ResumeBus) error {
+	client, err := bus.NewBusClient(keyvault.ServiceBusNamespace)
+	if err != nil {
+		return err
+	}
+	sender, err := client.NewQueueSender(keyvault.ServiceBusQueueName)
+	if err != nil {
+		return err
+	}
+	jsonData, err := json.Marshal(r)
+	if err != nil {
+		return err
+	}
+	err = sender.Send(c.Request.Context(), jsonData)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

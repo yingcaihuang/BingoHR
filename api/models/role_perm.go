@@ -17,7 +17,7 @@ type RolePerm struct {
 func GetRolePerms(role_id int) ([]*RolePerm, error) {
 	var rolePerms []*RolePerm
 
-	err := db.Model(&RolePerm{}).Where("role_id = ?", role_id).First(&rolePerms).Error
+	err := db.Model(&RolePerm{}).Where("role_id = ?", role_id).Find(&rolePerms).Error
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,14 @@ type KeyVaultClient struct {
 	ctx    context.Context
 }
 
+func GetBlobConf() (*setting.MicrosoftEntraIDConfig, error) {
+	loader, err := NewConfigLoader()
+	if err != nil {
+		return nil, err
+	}
+	return loader.LoadConfig()
+}
+
 func GetKeyVaultConf() (*setting.MicrosoftEntraIDConfig, error) {
 	// 创建配置加载器
 	loader, err := NewConfigLoader()

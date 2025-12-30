@@ -2,24 +2,13 @@ package api
 
 import (
 	"fmt"
-	"hr-api/pkg/keyvault"
-	"hr-api/pkg/setting"
-	"io"
-	"log"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/gin-gonic/gin"
+	"hr-api/pkg/keyvault"
+	"io"
 
 	"hr-api/pkg/app"
 )
-
-func GetBlobConf() (*setting.MicrosoftEntraIDConfig, error) {
-	loader, err := keyvault.NewConfigLoader()
-	if err != nil {
-		return nil, err
-	}
-	return loader.LoadConfig()
-}
 
 // @Summary Upload file to microsoft azure blob storage service
 // @Produce  json
@@ -30,7 +19,7 @@ func GetBlobConf() (*setting.MicrosoftEntraIDConfig, error) {
 func UploadFile(c *gin.Context) {
 	appG := app.Gin{C: c}
 
-	conf, err := GetBlobConf()
+	conf, err := keyvault.GetBlobConf()
 	accountName := conf.BlobAccountName     // BLOB-ACCOUNT-NAME
 	containerName := conf.BlobContainerName // BLOB-CONTAINER-NAME
 	// BLOB-ACCESS-KEY
@@ -72,10 +61,10 @@ func UploadFile(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	_, err = client.CreateContainer(ctx, containerName, nil)
-	if err != nil {
-		log.Printf("CreateContainer returned (likely exists): %v", err)
-	}
+	//_, err = client.CreateContainer(ctx, containerName, nil)
+	//if err != nil {
+	//	log.Printf("CreateContainer returned (likely exists): %v", err)
+	//}
 
 	blobName := file.Filename
 	_, err = client.UploadBuffer(ctx, containerName, blobName, fileBytes, nil)

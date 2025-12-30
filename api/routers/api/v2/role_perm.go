@@ -105,6 +105,7 @@ func AddRolePerms(c *gin.Context) {
 		RoleId:    data.RoleId,
 		Perms:     data.Perms,
 		CreateUid: currentUid,
+		Ctx:       c.Request.Context(),
 	}
 
 	err = srv.Add()

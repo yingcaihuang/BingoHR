@@ -48,11 +48,10 @@ func (g *Gin) FailResponse(msg string) {
 }
 
 // 401 Response data in gin.Json
-func (g *Gin) UnauthorizedResponse(msg string, data interface{}) {
+func (g *Gin) UnauthorizedResponse() {
 	g.C.JSON(http.StatusUnauthorized, Response{
 		Code: 1,
 		Msg:  "Unauthorized Request",
-		Data: data,
 	})
 	return
 }

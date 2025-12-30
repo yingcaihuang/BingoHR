@@ -21,6 +21,9 @@ func JWT() gin.HandlerFunc {
 
 		token := c.GetHeader("x-token")
 		if token == "" {
+			token, _ = c.Cookie("x-token")
+		}
+		if token == "" {
 			code = 1
 			msg = "缺少x-token鉴权头"
 		} else {

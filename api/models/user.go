@@ -13,6 +13,7 @@ type User struct {
 	Username   string `json:"username"`
 	Password   string `json:"-"`
 	Email      string `json:"email"`
+	OtpEnable  int    `json:"otp_enable"`
 	CreateUid  int    `json:"create_uid"`
 	CreateTime int    `json:"create_time"`
 	UpdateTime int    `json:"update_time"`
@@ -93,7 +94,7 @@ func GetUser(id int) (*User, error) {
 
 func GetUserByName(name string) (*User, error) {
 	var user User
-	err := db.Table("users").Where("name = ? ", name).First(&user).Error
+	err := db.Table("users").Where("username = ? ", name).First(&user).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
@@ -109,6 +110,7 @@ func AddUser(data map[string]interface{}, roles []int) error {
 		Username:   data["username"].(string),
 		Password:   data["password"].(string),
 		Email:      data["email"].(string),
+		OtpEnable:  data["otp_enable"].(int),
 		CreateTime: now,
 		CreateUid:  data["create_uid"].(int),
 	}

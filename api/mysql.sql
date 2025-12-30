@@ -26,22 +26,29 @@ CREATE TABLE IF NOT EXISTS `resumes` (
   KEY `job_id` (`job_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='上传的简历表';
 
+DROP TABLE IF EXISTS `resume_analyze_records`;
 CREATE TABLE IF NOT EXISTS `resume_analyze_records` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `resume_id` int unsigned NOT NULL DEFAULT '0' COMMENT '关联的简历ID',
   `status` varchar(32) NOT NULL DEFAULT '' COMMENT '分析状态 pending分析中 completed已完成 failed失败',
-  `result` mediumtext COMMENT 'AI分析结果',
-  `create_uid` int unsigned NOT NULL DEFAULT '0' COMMENT '创建分析的用户',
+  `name` varchar(128) NOT NULL DEFAULT '' COMMENT '姓名',
+  `location` varchar(128) NOT NULL DEFAULT '' COMMENT '地区',
+  `institution` varchar(255) NOT NULL DEFAULT '' COMMENT '毕业学校',
+    `degree` varchar(255) NOT NULL DEFAULT '' COMMENT '学历',
+    `score` varchar(255) NOT NULL DEFAULT '' COMMENT '评分',
+  `result` longtext COMMENT 'AI分析结果',
   `create_time` int unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `resume_id` (`resume_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='简历的AI分析历史记录表';
+
 
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(32) NOT NULL DEFAULT '' COMMENT '用户名',
   `password` varchar(32) NOT NULL DEFAULT '' COMMENT '密码',
   `email` varchar(255)  NOT NULL DEFAULT '' COMMENT '邮箱地址',
+  `otp_enable` tinyint NOT NULL DEFAULT '1' COMMENT 'mfa开关，0启用，1关闭.',
   `create_uid` int unsigned NOT NULL DEFAULT '0' COMMENT '创建人',
   `create_time` int unsigned NOT NULL DEFAULT '0' COMMENT '创建时间',
   `update_time` int unsigned NOT NULL DEFAULT '0' COMMENT '修改时间',

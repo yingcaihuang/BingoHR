@@ -1,12 +1,14 @@
 package parser
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"github.com/xavier268/mydocx" // DOCX
-	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -50,21 +52,21 @@ func (p *UnifiedResumeParser) Parse(filePath string) (string, error) {
 }
 
 func (rp *UnifiedResumeParser) parsePDF(pdfPath string) (string, error) {
-	// 检查文件是否存在
-	if _, err := os.Stat(pdfPath); err != nil {
-		return "", fmt.Errorf("文件不存在: %v", err)
+	path, err := exec.LookPath("pdftotext")
+	if err != nil {
+		return "", errors.New("pdftotext command not found in PATH")
 	}
 
-	// 策略2：使用pdfcpu
-	text, err := rp.extractWithPDFCPU(pdfPath)
-	if err == nil && len(text) > 50 {
-		log.Printf("使用pdfcpu成功提取%d字符", len(text))
-		return text, nil
+	cmd := exec.Command(path, "-layout", pdfPath, "-")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("pdftotext error: %v, %s", err, stderr.String())
 	}
-
-	// 策略3：降级到简单提取
-	log.Println("警告：使用简单文本提取，质量可能较低")
-	return rp.extractSimple(pdfPath)
+	return out.String(), nil
 }
 
 // 优化说明（简短）:

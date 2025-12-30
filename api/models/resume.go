@@ -11,13 +11,22 @@ type Resume struct {
 	ID         int    `json:"id" gorm:"primaryKey"`
 	JobId      int    `json:"job_id"`
 	FileName   string `json:"filename" gorm:"column:filename"`
-	Url        string `json:"-" gorm:"column:url"`
+	Url        string `json:"url" gorm:"column:url"`
 	Size       int    `json:"size"`
 	CreateUid  int    `json:"create_uid"`
 	CreateUser string `json:"create_user" gorm:"-"`
 	CreateTime int    `json:"create_time"`
 	UpdateTime int    `json:"update_time"`
 	JobName    string `json:"job_name" gorm:"->"`
+}
+
+type ResumeBus struct {
+	ResumeId  int    `json:"resume_id"`
+	FileName  string `json:"filename"`
+	JobName   string `json:"job_name"`
+	JobDemand string `json:"job_demand"`
+	JobDesc   string `json:"job_desc"`
+	Url       string `json:"url"`
 }
 
 // GetResumes get resume list data
@@ -87,7 +96,7 @@ func GetResumeTotal(keyword string, maps interface{}) (int, error) {
 }
 
 // AddResume add a single resume
-func AddResume(data map[string]interface{}) error {
+func AddResume(data map[string]interface{}) (int, error) {
 	now := int(time.Now().Unix())
 	rawUrl := data["url"].(string)
 	filename := util.GetFilenameFromURL(rawUrl)
@@ -100,10 +109,10 @@ func AddResume(data map[string]interface{}) error {
 		CreateUid:  data["create_uid"].(int),
 	}
 	if err := db.Create(&job).Error; err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return job.ID, nil
 }
 
 // EditResume modify a single resume

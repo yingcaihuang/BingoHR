@@ -7,14 +7,18 @@ import (
 
 // GetPage get page parameter
 func GetPage(c *gin.Context) int {
-	page := c.DefaultQuery("page", "0")
-	return com.StrTo(page).MustInt()
+	return GetIntQuery("page", c)
 }
 
 // GetLimit get limit parameter
 func GetLimit(c *gin.Context) int {
-	limit := c.DefaultQuery("limit", "0")
-	return com.StrTo(limit).MustInt()
+	return GetIntQuery("limit", c)
+}
+
+// GetIntQuery get a query param named by name, it is int
+func GetIntQuery(name string, c *gin.Context) int {
+	page := c.DefaultQuery(name, "0")
+	return com.StrTo(page).MustInt()
 }
 
 // GetCacheClear get cache_clear parameter

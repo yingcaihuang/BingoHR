@@ -2,12 +2,9 @@ package resume_service
 
 import (
 	"context"
-	"encoding/json"
-	"hr-api/pkg/cache"
 	"time"
 
 	"hr-api/models"
-	"hr-api/service/cache_service"
 )
 
 type Resume struct {
@@ -26,7 +23,7 @@ type Resume struct {
 	CacheClear int
 }
 
-func (r *Resume) Add() error {
+func (r *Resume) Add() (int, error) {
 	resume := map[string]interface{}{
 		"job_id":     r.JobId,
 		"url":        r.Url,
@@ -59,46 +56,15 @@ func (r *Resume) ExistByID() (bool, error) {
 
 func (r *Resume) GetAll() ([]*models.Resume, error) {
 	var (
-		datas, cacheDatas []*models.Resume
-		err               error
+		datas []*models.Resume
+		err   error
 	)
-
-	cacheService := cache_service.Cache{
-		Name:    cache.CACHE_RESUME,
-		Keyword: r.FileName,
-		Page:    r.Page,
-		Limit:   r.Limit,
-	}
-
-	rd, err := cache.GetInstance()
-	if err != nil {
-		return []*models.Resume{}, nil
-	}
-
-	key := cacheService.GetTagsKey()
-	if r.CacheClear > 0 {
-		rd.Delete(r.Ctx, key)
-	}
-
-	exist, _ := rd.Exists(r.Ctx, key)
-	if r.CacheClear == 0 && exist {
-		var cacheData string
-		if err := rd.Get(r.Ctx, key, &cacheData); err != nil {
-			return nil, err
-		} else {
-			json.Unmarshal([]byte(cacheData), &cacheDatas)
-			return cacheDatas, nil
-		}
-	}
 
 	datas, err = models.GetResumes(r.Page, r.Limit, r.FileName, r.getMaps())
 	if err != nil {
 		return nil, err
 	}
 
-	if len(datas) > 0 {
-		rd.Set(r.Ctx, key, datas, 3600*time.Second)
-	}
 	return datas, nil
 }
 
