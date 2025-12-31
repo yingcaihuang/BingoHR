@@ -36,7 +36,7 @@ func GetResumes(page int, limit int, keyword string, maps interface{}) ([]*Resum
 		err   error
 	)
 
-	query := db.Select("jobs.name AS job_name, resumes.*").Where(maps)
+	query := db.Select("jobs.name AS job_name, resumes.*").Where(maps).Order("resumes.id desc")
 	query = query.Joins("LEFT JOIN jobs ON jobs.id = resumes.job_id")
 
 	if keyword != "" {

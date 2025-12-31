@@ -195,8 +195,9 @@ func EditResume(c *gin.Context) {
 	if jobChanged {
 		// 将简历和职位信息推送给队列Bus
 		resumeBus := &models.ResumeBus{
-			ResumeId:  existData.ID,
-			FileName:  existData.FileName,
+			ResumeId: existData.ID,
+			// 始终使用URL中解析出来的文件名
+			FileName:  util.GetFilenameFromURL(existData.Url),
 			JobName:   job.Name,
 			JobDemand: job.Demand,
 			JobDesc:   job.Desc,

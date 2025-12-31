@@ -24,7 +24,7 @@ func GetJobs(page int, limit int, keyword string, maps interface{}) ([]*Job, err
 		err  error
 	)
 
-	query := db.Model(&Job{}).Where(maps)
+	query := db.Model(&Job{}).Where(maps).Order("id desc")
 
 	if keyword != "" {
 		query = query.Where("name LIKE ?", "%"+keyword+"%")

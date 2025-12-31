@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"hr-api/models"
 	"hr-api/pkg/app"
 	"hr-api/pkg/keyvault"
@@ -15,8 +14,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+
 	"hr-api/pkg/cache"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Login(c *gin.Context) {
@@ -145,6 +147,8 @@ func LoginCallback(c *gin.Context) {
 		Email:    "",
 		Roles:    []int{3},
 		Username: username,
+		// 是否来自Microsoft Entra ID登录, 0否1是
+		IsMicrosoft: 1,
 	}
 
 	if ok, err := service.ExistUserByUsername(); err != nil {
@@ -197,9 +201,20 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	// 构建 Entra ID 登出 URL
-	logoutURL := "https://login.microsoftonline.com/" + keyVault.TenantID + "/oauth2/v2.0/logout"
-	logoutURL += "?post_logout_redirect_uri=" + keyVault.FrontendURL
+	uid := util.GetCurrentUid(c)
+	service := user_service.User{Id: uid}
+	checkUser, err := service.GetUser()
+	if err != nil {
+		appG.IntervalErrorResponse(err.Error())
+		return
+	}
+
+	var logoutURL string = ""
+	if checkUser.ID > 0 && checkUser.IsMicrosoft > 0 {
+		// 构建 Entra ID 登出 URL
+		logoutURL += "https://login.microsoftonline.com/" + keyVault.TenantID + "/oauth2/v2.0/logout"
+		logoutURL += "?post_logout_redirect_uri=" + keyVault.FrontendURL
+	}
 
 	appG.SuccessResponse(logoutURL)
 }

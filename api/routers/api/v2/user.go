@@ -72,10 +72,11 @@ func GetUserProfile(c *gin.Context) {
 	}
 
 	appG.SuccessResponse(map[string]interface{}{
-		"id":       uid,
-		"uid":      uid,
-		"username": checkUser.Username,
-		"email":    checkUser.Email,
+		"id":         uid,
+		"uid":        uid,
+		"username":   checkUser.Username,
+		"email":      checkUser.Email,
+		"otp_enable": checkUser.OtpEnable,
 	})
 }
 
@@ -132,10 +133,13 @@ func AddUser(c *gin.Context) {
 }
 
 type UserEditBody struct {
-	Id       int    `json:"id" binding:"required,min=1"`
-	Password string `json:"password" binding:"max=32"`
-	Email    string `json:"email" binding:"max=128"`
-	Roles    []int  `json:"roles"`
+	Id          int    `json:"id" binding:"required,min=1"`
+	Password    string `json:"password" binding:"max=32"`
+	Email       string `json:"email" binding:"max=128"`
+	IsMicrosoft int    `json:"is_microsoft"`
+	OtpSecret   string `json:"otp_secret"`
+	OtpUrl      string `json:"otp_url"`
+	Roles       []int  `json:"roles"`
 }
 
 // @Summary Edit a user

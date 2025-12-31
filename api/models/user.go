@@ -9,11 +9,16 @@ import (
 )
 
 type User struct {
-	ID         int    `json:"id" gorm:"primaryKey"`
-	Username   string `json:"username"`
-	Password   string `json:"-"`
-	Email      string `json:"email"`
+	ID       int    `json:"id" gorm:"primaryKey"`
+	Username string `json:"username"`
+	Password string `json:"-"`
+	Email    string `json:"email"`
+	// 是否来自Microsoft Entra ID登录, 0否1是
+	IsMicrosoft int `json:"is_microsoft" gorm:"column:is_microsoft"`
+	// mfa开关，0启用，1关闭.
 	OtpEnable  int    `json:"otp_enable"`
+	OtpSecret  string `json:"-" gorm:"column:otp_secret"`
+	OtpUrl     string `json:"-" gorm:"column:otp_url"`
 	CreateUid  int    `json:"create_uid"`
 	CreateTime int    `json:"create_time"`
 	UpdateTime int    `json:"update_time"`
@@ -34,7 +39,7 @@ func GetUsers(page int, limit int, keyword string, maps interface{}) ([]*User, e
 		err   error
 	)
 
-	query := db.Model(&User{}).Where(maps)
+	query := db.Model(&User{}).Where(maps).Order("users.id desc")
 
 	if keyword != "" {
 		query = query.Where("users.name LIKE ?", "%"+keyword+"%")
@@ -92,6 +97,7 @@ func GetUser(id int) (*User, error) {
 	return &d, nil
 }
 
+// GetUserByName Get a single user based on username
 func GetUserByName(name string) (*User, error) {
 	var user User
 	err := db.Table("users").Where("username = ? ", name).First(&user).Error

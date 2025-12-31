@@ -9,15 +9,17 @@ import (
 )
 
 type User struct {
-	Id         int
-	Username   string
-	Password   string
-	Email      string
-	Roles      []int
-	CreateUid  int
-	CreateTime int
-	UpdateTime int
-	Ctx        context.Context
+	Id       int
+	Username string
+	Password string
+	Email    string
+	// 是否来自Microsoft Entra ID登录, 0否1是
+	IsMicrosoft int
+	Roles       []int
+	CreateUid   int
+	CreateTime  int
+	UpdateTime  int
+	Ctx         context.Context
 
 	Page       int
 	Limit      int
@@ -26,10 +28,11 @@ type User struct {
 
 func (u *User) Add() error {
 	user := map[string]interface{}{
-		"username":   u.Username,
-		"password":   util.EncodeMD5(u.Password),
-		"email":      u.Email,
-		"create_uid": u.CreateUid,
+		"username":     u.Username,
+		"password":     util.EncodeMD5(u.Password),
+		"email":        u.Email,
+		"create_uid":   u.CreateUid,
+		"is_microsoft": u.IsMicrosoft,
 	}
 	return models.AddUser(user, u.Roles)
 }

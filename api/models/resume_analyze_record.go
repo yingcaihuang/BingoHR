@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"gorm.io/gorm"
 )
@@ -29,7 +30,7 @@ func GetRecords(resume_id, page, limit int) ([]*ResumeAnalyzeRecord, error) {
 		err     error
 	)
 
-	query := db.Select("resumes.filename as filename, resume_analyze_records.*")
+	query := db.Select("resumes.filename as filename, resume_analyze_records.*").Order("resume_analyze_records.id desc")
 	query = query.Joins("LEFT JOIN resumes ON resumes.id = resume_analyze_records.resume_id")
 
 	if resume_id > 0 {
